@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State Bank of India - Digital Banking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-color: #f7fafc;
+        }
+        .page-content {
+            display: none;
+        }
+        .active-page {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal styling */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .message-box {
+            text-align: left;
+        }
+        .blinking-button {
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Generic Action Message Box -->
+    <div id="action-message-box" class="modal">
+        <div class="modal-content message-box">
+            <h3 class="text-xl font-bold mb-2 text-red-600" id="action-message-title">Success!</h3>
+            <div class="text-gray-600" id="action-message-text">This is a placeholder for a successful action.</div>
+            <div class="flex justify-between items-center mt-4">
+                <button id="close-action-message" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition duration-300 blinking-button">Close</button>
+                <button id="go-home-btn" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300">Go to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Entry Modal -->
+    <div id="pin-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Enter Your PIN</h3>
+            <p class="text-gray-600 mb-4">Please enter your 4-digit UPI PIN to confirm the payment.</p>
+            <input type="password" id="pin-input" maxlength="4" class="w-full px-4 py-3 border rounded-full text-center tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-red-500">
+            <div class="flex justify-between items-center mt-6 space-x-4">
+                <button id="close-pin-modal" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300">Cancel</button>
+                <button id="confirm-pin-btn" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition duration-300">Confirm Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Details Modal for UPI Lite -->
+    <div id="contact-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Your Contacts</h3>
+            <ul id="contact-list" class="space-y-4 text-left">
+                <!-- Contacts will be populated here by JavaScript -->
+            </ul>
+            <div class="flex justify-between items-center mt-6">
+                <button id="close-contact-modal" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition duration-300 blinking-button">Close</button>
+                <button id="go-home-btn-contact" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300">Go to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Investment Modal -->
+    <div id="investment-modal" class="modal">
+        <div class="modal-content message-box">
+            <h3 class="text-xl font-bold mb-2 text-red-600" id="investment-modal-title">Investment Link</h3>
+            <div class="text-gray-600" id="investment-modal-text">Click the button below to proceed.</div>
+            <a id="investment-link-btn" href="#" target="_blank" class="block w-full text-center bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-red-700 mt-6 transition duration-300">
+                Go to Taata Play Bills Website
+            </a>
+            <div class="flex justify-center items-center mt-4 space-x-4">
+                <button id="close-investment-modal" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300 blinking-button">Close</button>
+                <button id="go-home-btn-investment" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300">Go to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Myntra Vouchers Modal -->
+    <div id="myntra-voucher-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Myntra Vouchers</h3>
+            <p class="text-gray-600 mb-4">You have <span id="current-points-modal" class="font-bold text-red-600">12,500</span> points.</p>
+            <ul id="myntra-voucher-list" class="space-y-4 text-left max-h-64 overflow-y-auto pr-2">
+                <!-- Vouchers will be populated by JavaScript -->
+            </ul>
+            <div class="flex justify-between items-center mt-6">
+                <button id="close-myntra-voucher-modal" class="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-full shadow-md hover:bg-gray-400 transition duration-300">Close</button>
+                <button id="go-home-btn-voucher" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition duration-300 blinking-button">Go to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <!-- SBI Logo -->
+            <a href="#" id="nav-home-link" class="flex items-center space-x-2">
+                <!-- Placeholder for the SBI logo -->
+                <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" fill="#C5203A"/>
+                    <path d="M50 20L50 80M50 80L30 60M50 80L70 60M50 80H20M50 20H80" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-xl font-bold text-red-600">SBI</span>
+            </a>
+            
+            <!-- Navigation Links -->
+            <div class="hidden md:flex space-x-8 text-sm font-semibold">
+                <a href="#home" class="nav-link text-red-600 hover:text-red-800 transition duration-300">Home</a>
+                <a href="#personal" class="nav-link text-gray-600 hover:text-red-800 transition duration-300">Personal Banking</a>
+                <a href="#payments" class="nav-link text-gray-600 hover:text-red-800 transition duration-300">Payments & Bills</a>
+                <a href="#investments" class="nav-link text-gray-600 hover:text-red-800 transition duration-300">Mutual Funds</a>
+                <a href="#rewards" class="nav-link text-gray-600 hover:text-red-800 transition duration-300">Rewards & Referrals</a>
+            </div>
+            
+            <!-- Auth Buttons -->
+            <div class="flex items-center space-x-4">
+                <button id="login-btn" class="text-sm font-bold text-red-600 hover:underline">Log In</button>
+                <button id="signup-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md hover:bg-red-700 transition duration-300">Sign Up</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- Home Page Section - Redesigned with Profile Details -->
+        <section id="home-page" class="page-content active-page">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Profile Details on Left -->
+                <div id="profile-details-card" class="bg-white p-6 rounded-2xl shadow-md transform hover:scale-105 transition duration-300 md:col-span-1 cursor-pointer">
+                    <h3 class="text-xl font-semibold mb-4 text-red-600">My Profile</h3>
+                    <p><strong class="text-gray-700">Name:</strong> Rohan Sharma</p>
+                    <p><strong class="text-gray-700">Account No:</strong> XXXXXXXX1234</p>
+                    <p><strong class="text-gray-700">Email:</strong> rohan.s@example.com</p>
+                    <p><strong class="text-gray-700">Registered Mobile:</strong> +91 9876543210</p>
+                </div>
+
+                <!-- Main Content on Right -->
+                <div class="md:col-span-2">
+                    <div class="bg-red-700 text-white rounded-3xl shadow-xl p-8 sm:p-12 text-left">
+                        <h1 class="text-3xl sm:text-5xl font-extrabold mb-4 animate-fadeIn">Your Financial World, Simplified</h1>
+                        <p class="text-base sm:text-lg mb-8 max-w-2xl animate-fadeIn" style="animation-delay: 0.2s;">
+                            Experience seamless banking, smart investments, and easy payments, all in one place with State Bank of India's digital platform.
+                        </p>
+                        <button id="get-started-btn" class="bg-white text-red-700 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transform hover:scale-105 transition duration-300 animate-fadeIn" style="animation-delay: 0.4s;">
+                            Get Started Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature Cards below the main section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                <div class="bg-white p-6 rounded-2xl shadow-md text-center transform hover:scale-105 transition duration-300">
+                    <h3 class="font-bold text-xl text-red-600">Quick Payments</h3>
+                    <p class="text-gray-600 mt-2">Pay bills, recharge, and send money in a tap.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md text-center transform hover:scale-105 transition duration-300">
+                    <h3 class="font-bold text-xl text-red-600">Smart Investments</h3>
+                    <p class="text-gray-600 mt-2">Grow your wealth with tailored mutual fund options.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-md text-center transform hover:scale-105 transition duration-300">
+                    <h3 class="font-bold text-xl text-red-600">Secure & Safe</h3>
+                    <p class="text-gray-600 mt-2">Your data and transactions are protected with top-tier security.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Personal Banking Section -->
+        <section id="personal-page" class="page-content">
+            <div class="bg-white p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 text-red-600">Personal Banking</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Personal Details -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">My Profile</h3>
+                        <p><strong class="text-gray-700">Name:</strong> Rohan Sharma</p>
+                        <p><strong class="text-gray-700">Account No:</strong> XXXXXXXX1234</p>
+                        <p><strong class="text-gray-700">Email:</strong> rohan.s@example.com</p>
+                        <p><strong class="text-gray-700">Registered Mobile:</strong> +91 9876543210</p>
+                    </div>
+                    
+                    <!-- Bank Balance -->
+                    <div class="bg-red-50 p-6 rounded-2xl shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Account Balance</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-3xl font-bold text-red-600">₹ <span id="balance-amount">5,20,500.00</span></span>
+                            <button id="refresh-balance-btn" class="text-red-600 hover:text-red-800 transition duration-300">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 5h.582m-15.356 2A8.001 8.001 0 0020.582 15m0 0H15"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">Updated: <span id="last-updated">Just now</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payments Section -->
+        <section id="payments-page" class="page-content">
+            <div class="bg-white p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 text-red-600">Payments & Bills</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Recharge -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center">
+                        <h3 class="font-bold text-lg mb-2">Mobile Recharge</h3>
+                        <p class="text-gray-600 mb-4">Recharge your prepaid mobile number instantly.</p>
+                        <button id="recharge-btn" class="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Recharge</button>
+                    </div>
+                    
+                    <!-- Bills -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center">
+                        <h3 class="font-bold text-lg mb-2">Pay Bills</h3>
+                        <p class="text-gray-600 mb-4">Pay electricity, water, gas bills, and more.</p>
+                        <button id="bills-btn" class="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Pay Bills</button>
+                    </div>
+                    
+                    <!-- UPI Lite -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center">
+                        <h3 class="font-bold text-lg mb-2">UPI Lite</h3>
+                        <p class="text-gray-600 mb-4">Small payments up to ₹500 without UPI PIN.</p>
+                        <button id="upi-lite-btn" class="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Enable UPI Lite</button>
+                    </div>
+
+                    <!-- Contact Payments -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center col-span-1 md:col-span-2 lg:col-span-3">
+                        <h3 class="font-bold text-lg mb-2">Contact Payments</h3>
+                        <p class="text-gray-600 mb-4">Send money to contacts directly from your phonebook.</p>
+                        <button id="contact-payments-btn" class="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Pay a Contact</button>
+                    </div>
+
+                    <!-- Payment History Button -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center col-span-1 md:col-span-2 lg:col-span-3">
+                        <h3 class="font-bold text-lg mb-2">View Your History</h3>
+                        <p class="text-gray-600 mb-4">See all your past transactions and bills.</p>
+                        <button id="view-history-btn" class="bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">View History</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Investments Section -->
+        <section id="investments-page" class="page-content">
+            <div class="bg-white p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 text-red-600">Mutual Funds</h2>
+                <p class="text-gray-600 mb-6">Invest in a wide range of mutual funds. Choose from pre-built portfolios or create your own.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Top Performing Funds</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>SBI Bluechip Fund</li>
+                            <li>SBI Equity Hybrid Fund</li>
+                            <li>SBI Small Cap Fund</li>
+                        </ul>
+                        <button id="explore-funds-btn" class="action-btn mt-4 bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Explore Funds</button>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Start a SIP</h3>
+                        <p class="text-gray-600 mb-4">Invest a fixed amount regularly with a Systematic Investment Plan (SIP).</p>
+                        <button id="start-sip-btn" class="action-btn bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Start a SIP</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rewards & Referrals Section -->
+        <section id="rewards-page" class="page-content">
+            <div class="bg-white p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 text-red-600">Rewards & Referrals</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Rewards -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center">
+                        <h3 class="font-bold text-lg mb-2">My Rewards Points</h3>
+                        <div id="rewards-points" class="text-5xl font-bold text-red-600 mb-4">12,500</div>
+                        <p class="text-gray-600 mb-4">You have <span id="current-points">12,500</span> reward points. Redeem them for exciting vouchers and discounts!</p>
+                        <button id="redeem-rewards-btn" class="action-btn bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Redeem Rewards</button>
+                    </div>
+
+                    <!-- Referrals -->
+                    <div class="bg-gray-50 p-6 rounded-2xl shadow-md text-center">
+                        <h3 class="font-bold text-lg mb-2">Refer & Earn</h3>
+                        <p class="text-gray-600 mb-4">Invite friends to SBI Digital Banking and earn a bonus for every successful referral.</p>
+                        <div id="referral-link-text" class="bg-white rounded-lg p-3 text-sm text-gray-500 border border-gray-200">
+                            sbi.in/refer/rohan123
+                        </div>
+                        <button id="share-link-btn" class="action-btn mt-4 bg-red-600 text-white py-2 px-6 rounded-full hover:bg-red-700 transition duration-300">Share Link</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Login/Signup -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="auth-title" class="text-2xl font-bold mb-4 text-red-600">Log In</h3>
+            <form class="space-y-4">
+                <div>
+                    <input type="text" placeholder="Username" class="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <div>
+                    <input type="password" placeholder="Password" class="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                </div>
+                <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 rounded-full hover:bg-red-700 transition duration-300">
+                    <span id="auth-button-text">Log In</span>
+                </button>
+            </form>
+            <button id="close-modal-btn" class="mt-4 text-gray-500 hover:text-gray-700">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page-content');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const authModal = document.getElementById('auth-modal');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
+        const authTitle = document.getElementById('auth-title');
+        const authButtonText = document.getElementById('auth-button-text');
+        
+        // New button and message box references
+        const getStartedBtn = document.getElementById('get-started-btn');
+        const actionMessage = document.getElementById('action-message-box');
+        const actionMessageTitle = document.getElementById('action-message-title');
+        const actionMessageText = document.getElementById('action-message-text');
+        const closeActionMessageBtn = document.getElementById('close-action-message');
+        const contactModal = document.getElementById('contact-modal');
+        const closeContactModalBtn = document.getElementById('close-contact-modal');
+        const contactList = document.getElementById('contact-list');
+        const rechargeBtn = document.getElementById('recharge-btn');
+        const billsBtn = document.getElementById('bills-btn');
+        const upiLiteBtn = document.getElementById('upi-lite-btn');
+        const viewHistoryBtn = document.getElementById('view-history-btn');
+        const goHomeBtns = document.querySelectorAll('[id^="go-home-btn"]');
+        const exploreFundsBtn = document.getElementById('explore-funds-btn');
+        const startSipBtn = document.getElementById('start-sip-btn');
+        const investmentModal = document.getElementById('investment-modal');
+        const closeInvestmentModalBtn = document.getElementById('close-investment-modal');
+        const goHomeInvestmentBtn = document.getElementById('go-home-btn-investment');
+        const investmentLinkBtn = document.getElementById('investment-link-btn');
+        const pinModal = document.getElementById('pin-modal');
+        const closePinModalBtn = document.getElementById('close-pin-modal');
+        const confirmPinBtn = document.getElementById('confirm-pin-btn');
+        const myntraVoucherModal = document.getElementById('myntra-voucher-modal');
+        const myntraVoucherList = document.getElementById('myntra-voucher-list');
+        const closeMyntraVoucherModalBtn = document.getElementById('close-myntra-voucher-modal');
+        const goHomeVoucherBtn = document.getElementById('go-home-btn-voucher');
+
+        // New profile details card reference
+        const profileDetailsCard = document.getElementById('profile-details-card');
+        
+        // Rewards and Referrals button references
+        const redeemRewardsBtn = document.getElementById('redeem-rewards-btn');
+        const shareLinkBtn = document.getElementById('share-link-btn');
+        const referralLinkText = document.getElementById('referral-link-text');
+        
+        // State variables to pass data between modals
+        let selectedPaymentId = null;
+
+        // Mock data
+        let rewardsPoints = 12500;
+        const rewardsPointsDisplay = document.getElementById('rewards-points');
+        const currentPointsDisplay = document.getElementById('current-points');
+        const currentPointsModalDisplay = document.getElementById('current-points-modal');
+
+        const myntraVouchers = [
+            { name: "Myntra Discount ₹200", cost: 2000, code: "MYNTRA200" },
+            { name: "Myntra Discount ₹500", cost: 4500, code: "MYNTRA500" },
+            { name: "Myntra Discount ₹1000", cost: 9000, code: "MYNTRA1000" },
+            { name: "Myntra VIP Access", cost: 15000, code: "MYNTRAVIP" },
+            { name: "Myntra Free Shipping", cost: 1000, code: "MYNTRAFSC" }
+        ];
+
+        const recentPurchases = [
+            { id: 1, type: "Recharge", description: "Mobile Recharge for Jio", amount: "₹ 199.00", date: "2024-10-25" },
+            { id: 2, type: "Bills", description: "Electricity Bill (BESCOM)", amount: "₹ 1,500.00", date: "2024-10-24" },
+            { id: 3, type: "Recharge", description: "DTH Recharge for Tata Play", amount: "₹ 350.00", date: "2024-10-22" },
+            { id: 4, type: "Bills", description: "Water Bill", amount: "₹ 450.00", date: "2024-10-20" }
+        ];
+
+        const mockContacts = [
+            { name: "Anil Kumar", phone: "9876543210", upi: "anil@upi" },
+            { name: "Priya Singh", phone: "9988776655", upi: "priya.s@upi" },
+            { name: "Amit Patel", phone: "8765432109", upi: "amitp@upi" },
+            { name: "Neha Sharma", phone: "9012345678", upi: "neha.sharma@upi" }
+        ];
+
+        let paymentHistory = [];
+
+        // Function to update rewards points display
+        function updateRewardsDisplay() {
+            rewardsPointsDisplay.textContent = rewardsPoints.toLocaleString();
+            currentPointsDisplay.textContent = rewardsPoints.toLocaleString();
+            currentPointsModalDisplay.textContent = rewardsPoints.toLocaleString();
+        }
+
+        // Function to show a specific page
+        function showPage(pageId) {
+            pages.forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            
+            navLinks.forEach(link => {
+                link.classList.remove('text-red-600');
+                link.classList.add('text-gray-600');
+            });
+            const activeLink = document.querySelector(`a[href="#${pageId.replace('-page', '')}"]`);
+            if (activeLink) {
+                activeLink.classList.remove('text-gray-600');
+                activeLink.classList.add('text-red-600');
+            }
+        }
+        
+        // Navigation links event listeners
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.getAttribute('href').substring(1) + '-page';
+                showPage(pageId);
+            });
+        });
+
+        // "Get Started Now" button event listener
+        getStartedBtn.addEventListener('click', () => {
+            showPage('personal-page');
+        });
+
+        // Event listener for the new profile details card
+        profileDetailsCard.addEventListener('click', () => {
+            showPage('home-page');
+        });
+
+        // Auth modal event listeners
+        loginBtn.addEventListener('click', () => {
+            authTitle.textContent = 'Log In';
+            authButtonText.textContent = 'Log In';
+            authModal.style.display = 'flex';
+        });
+
+        signupBtn.addEventListener('click', () => {
+            authTitle.textContent = 'Sign Up';
+            authButtonText.textContent = 'Sign Up';
+            authModal.style.display = 'flex';
+        });
+
+        closeBtn.addEventListener('click', () => {
+            authModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                authModal.style.display = 'none';
+            }
+        });
+        
+        // Payment History button logic
+        viewHistoryBtn.addEventListener('click', () => {
+            actionMessageTitle.textContent = "Your Payment History";
+            if (paymentHistory.length === 0) {
+                actionMessageText.innerHTML = `<p class="text-center">No recent payments found.</p>`;
+            } else {
+                actionMessageText.innerHTML = `
+                    <p class="mb-4">Here are your completed payments:</p>
+                    <div class="space-y-2">
+                        ${paymentHistory.map(p => `
+                            <div class="p-3 bg-gray-100 rounded-lg">
+                                <p class="font-semibold">${p.description}</p>
+                                <p class="text-sm text-gray-500">${p.date} - ${p.amount}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            actionMessage.style.display = 'flex';
+        });
+
+
+        // Specific button logic
+        rechargeBtn.addEventListener('click', () => {
+            actionMessageTitle.textContent = "Recent Recharges";
+            actionMessageText.innerHTML = `
+                <p class="mb-4">Select a recent recharge:</p>
+                <div class="space-y-2">
+                    ${recentPurchases.filter(p => p.type === "Recharge").map(p => `
+                        <div class="payment-item p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-red-50 transition duration-300" data-id="${p.id}">
+                            <p class="font-semibold">${p.description}</p>
+                            <p class="text-sm text-gray-500">${p.date} - <span class="text-red-600 font-bold">${p.amount}</span></p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            actionMessage.style.display = 'flex';
+        });
+
+        billsBtn.addEventListener('click', () => {
+            actionMessageTitle.textContent = "Recent Bills Paid";
+            actionMessageText.innerHTML = `
+                <p class="mb-4">Select a recent bill:</p>
+                <div class="space-y-2">
+                    ${recentPurchases.filter(p => p.type === "Bills").map(p => `
+                        <div class="payment-item p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-red-50 transition duration-300" data-id="${p.id}">
+                            <p class="font-semibold">${p.description}</p>
+                            <p class="text-sm text-gray-500">${p.date} - <span class="text-red-600 font-bold">${p.amount}</span></p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            actionMessage.style.display = 'flex';
+        });
+
+        // Event listener for clicking on a payment item
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.payment-item')) {
+                const itemDiv = e.target.closest('.payment-item');
+                selectedPaymentId = itemDiv.getAttribute('data-id');
+                const selectedPurchase = recentPurchases.find(p => p.id == selectedPaymentId);
+
+                actionMessageTitle.textContent = "Confirm Payment";
+                actionMessageText.innerHTML = `
+                    <p class="mb-4">Do you want to pay for:</p>
+                    <div class="p-4 bg-red-50 rounded-lg">
+                        <p class="font-bold text-red-700">${selectedPurchase.description}</p>
+                        <p class="text-lg font-semibold text-red-600 mt-1">${selectedPurchase.amount}</p>
+                    </div>
+                    <button id="proceed-payment-btn" class="mt-6 bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-red-700 transition duration-300 transform hover:scale-105">
+                        Proceed Payment
+                    </button>
+                    <button id="go-back-btn" class="mt-4 text-gray-500 hover:text-gray-700">Go Back</button>
+                `;
+            } else if (e.target.id === 'proceed-payment-btn') {
+                actionMessage.style.display = 'none';
+                pinModal.style.display = 'flex';
+            } else if (e.target.id === 'go-back-btn') {
+                actionMessage.style.display = 'none';
+                // Simple logic for this demo
+                if (recentPurchases.some(p => p.type === "Recharge" && p.id == selectedPaymentId)) {
+                    rechargeBtn.click();
+                } else {
+                    billsBtn.click();
+                }
+            }
+        });
+
+        confirmPinBtn.addEventListener('click', () => {
+            const pinInput = document.getElementById('pin-input');
+            const pin = pinInput.value;
+            // Simple validation: check if pin is 4 digits
+            if (pin.length === 4 && !isNaN(pin)) {
+                const paidItem = recentPurchases.find(p => p.id == selectedPaymentId);
+                paymentHistory.push(paidItem);
+                
+                pinModal.style.display = 'none';
+                actionMessageTitle.textContent = "Payment Successful!";
+                actionMessageText.innerHTML = `
+                    <p class="text-lg font-bold text-green-600 mb-2">Payment of ${paidItem.amount} for "${paidItem.description}" was successful.</p>
+                `;
+                actionMessage.style.display = 'flex';
+                pinInput.value = ''; // Clear the pin input
+            } else {
+                pinInput.value = '';
+                pinInput.placeholder = 'Invalid PIN. Try again.';
+            }
+        });
+
+        upiLiteBtn.addEventListener('click', () => {
+            contactList.innerHTML = '';
+            mockContacts.forEach(contact => {
+                const li = document.createElement('li');
+                li.className = "flex items-center space-x-4 p-4 rounded-xl bg-gray-50 shadow-sm hover:bg-red-50 transition duration-300 cursor-pointer";
+                li.innerHTML = `
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-lg">
+                        ${contact.name.charAt(0)}
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-800">${contact.name}</div>
+                        <div class="text-sm text-gray-500">${contact.phone}</div>
+                    </div>
+                `;
+                li.addEventListener('click', () => {
+                    contactModal.style.display = 'none';
+                    actionMessageTitle.textContent = "Sending Money";
+                    actionMessageText.innerHTML = `<p>Simulating sending money to **${contact.name}** via UPI Lite.</p>`;
+                    actionMessage.style.display = 'flex';
+                });
+                contactList.appendChild(li);
+            });
+            contactModal.style.display = 'flex';
+        });
+
+        // Investment buttons functionality
+        exploreFundsBtn.addEventListener('click', () => {
+            investmentModal.style.display = 'flex';
+            investmentModal.querySelector('#investment-modal-title').textContent = "Explore Mutual Funds";
+            investmentModal.querySelector('#investment-modal-text').textContent = "You are being redirected to our investment partner's portal.";
+            investmentLinkBtn.href = "https://www.google.com/search?q=mutual+funds";
+            investmentLinkBtn.textContent = "Go to Investment Portal";
+        });
+
+        startSipBtn.addEventListener('click', () => {
+            investmentModal.style.display = 'flex';
+            investmentModal.querySelector('#investment-modal-title').textContent = "Start a SIP";
+            investmentModal.querySelector('#investment-modal-text').textContent = "You are being redirected to set up a new Systematic Investment Plan.";
+            investmentLinkBtn.href = "https://www.google.com/search?q=start+sip";
+            investmentLinkBtn.textContent = "Set Up SIP";
+        });
+
+        // Close and Home button event listeners for modals
+        closeActionMessageBtn.addEventListener('click', () => {
+            actionMessage.style.display = 'none';
+        });
+        closeContactModalBtn.addEventListener('click', () => {
+            contactModal.style.display = 'none';
+        });
+        closeInvestmentModalBtn.addEventListener('click', () => {
+            investmentModal.style.display = 'none';
+        });
+        closePinModalBtn.addEventListener('click', () => {
+            pinModal.style.display = 'none';
+        });
+        closeMyntraVoucherModalBtn.addEventListener('click', () => {
+            myntraVoucherModal.style.display = 'none';
+        });
+        
+        goHomeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                showPage('home-page');
+                actionMessage.style.display = 'none';
+                contactModal.style.display = 'none';
+                investmentModal.style.display = 'none';
+                myntraVoucherModal.style.display = 'none';
+            });
+        });
+        
+        // This button specifically for the investment modal
+        goHomeInvestmentBtn.addEventListener('click', () => {
+            showPage('home-page');
+            investmentModal.style.display = 'none';
+        });
+
+        // This button specifically for the voucher modal
+        goHomeVoucherBtn.addEventListener('click', () => {
+            showPage('home-page');
+            myntraVoucherModal.style.display = 'none';
+        });
+
+        // Mock balance refresh functionality
+        document.getElementById('refresh-balance-btn').addEventListener('click', () => {
+            const balanceAmount = document.getElementById('balance-amount');
+            const lastUpdated = document.getElementById('last-updated');
+            
+            // Simulate API call delay
+            balanceAmount.textContent = '...';
+            setTimeout(() => {
+                const newBalance = (Math.random() * 10000) + 500000;
+                balanceAmount.textContent = newBalance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+            }, 1000);
+        });
+
+        // Rewards functionality
+        redeemRewardsBtn.addEventListener('click', () => {
+            currentPointsModalDisplay.textContent = rewardsPoints.toLocaleString();
+            myntraVoucherList.innerHTML = ''; // Clear previous vouchers
+            
+            myntraVouchers.forEach(voucher => {
+                const li = document.createElement('li');
+                li.className = `p-4 rounded-xl bg-gray-50 shadow-sm cursor-pointer transition duration-300 hover:bg-red-50`;
+                li.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-gray-800">${voucher.name}</span>
+                        <span class="text-sm font-bold text-red-600">${voucher.cost.toLocaleString()} points</span>
+                    </div>
+                `;
+                li.addEventListener('click', () => {
+                    if (rewardsPoints >= voucher.cost) {
+                        rewardsPoints -= voucher.cost;
+                        updateRewardsDisplay();
+                        myntraVoucherModal.style.display = 'none';
+                        actionMessageTitle.textContent = "Voucher Redeemed!";
+                        actionMessageText.innerHTML = `
+                            <p class="text-lg font-bold text-green-600 mb-2">You have successfully redeemed a voucher for **${voucher.name}**.</p>
+                            <p>Here is your code. Copy it and use it on the Myntra website.</p>
+                            <div class="bg-red-100 p-3 rounded-lg flex items-center justify-between mt-4">
+                                <span id="voucher-code" class="font-bold text-red-700">${voucher.code}</span>
+                                <button id="copy-code-btn" class="bg-red-600 text-white font-bold py-1 px-3 rounded-full hover:bg-red-700 transition duration-300">Copy</button>
+                            </div>
+                            <a href="https://www.myntra.com" target="_blank" class="mt-4 inline-block bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-red-700 transition duration-300">Go to Myntra</a>
+                        `;
+                        actionMessage.style.display = 'flex';
+                        
+                        document.getElementById('copy-code-btn').addEventListener('click', () => {
+                            const code = document.getElementById('voucher-code').textContent;
+                            document.execCommand('copy');
+                            document.getElementById('copy-code-btn').textContent = "Copied!";
+                        });
+                        
+                    } else {
+                        myntraVoucherModal.style.display = 'none';
+                        actionMessageTitle.textContent = "Insufficient Points!";
+                        actionMessageText.innerHTML = `
+                            <p class="text-lg font-bold text-red-600 mb-2">You don't have enough points for this voucher.</p>
+                            <p>You need ${voucher.cost.toLocaleString()} points, but you only have ${rewardsPoints.toLocaleString()}.</p>
+                        `;
+                        actionMessage.style.display = 'flex';
+                    }
+                });
+                myntraVoucherList.appendChild(li);
+            });
+            myntraVoucherModal.style.display = 'flex';
+        });
+
+        // Share link functionality
+        shareLinkBtn.addEventListener('click', () => {
+            const referralLink = referralLinkText.textContent.trim();
+
+            // Create a temporary input element to copy the text
+            const tempInput = document.createElement('input');
+            tempInput.value = referralLink;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            actionMessageTitle.textContent = "Link Copied!";
+            actionMessageText.innerHTML = `<p>The referral link has been copied to your clipboard. Share it with your friends to earn rewards!</p>`;
+            actionMessage.style.display = 'flex';
+        });
+
+        // Initial page load and rewards display
+        showPage('home-page');
+        updateRewardsDisplay();
+    </script>
+</body>
+</html>
